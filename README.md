@@ -1,8 +1,12 @@
 # Dify on Railway: template helpers
 
-Config for the two helper services in the Dify Railway template (Dify 1.19.0). Every service in the
-template runs a pinned upstream image; nothing is built. The two helpers get their config files from
-their start command, which unpacks a small archive of the files in this repo.
+Start scripts and config for the Dify Railway template (Dify 1.19.0). Every service in the template runs
+a pinned upstream image; nothing is built. Each service's start command writes its script from this repo
+into the container and runs it (`scripts/start-commands.sh` prints them).
+
+The `start/` scripts give Dify's fixed settings a default (the same values as upstream
+`docker/envs/*.defaults`), so the template only needs variables for secrets, ports and service links.
+Any variable you set on a Railway service overrides the script's default.
 
 | Folder | Railway service | Image | What it does |
 |---|---|---|---|
@@ -14,9 +18,9 @@ Proxy settings (environment variables): `PORT` (default 8080), `API_HOST`/`API_P
 The SSRF proxy reads `HTTP_PORT` (3128) and `COREDUMP_DIR` (`/var/spool/squid`), plus the optional upstream
 allow-lists `SSRF_PROXY_ALLOW_PRIVATE_IPS` and `SSRF_PROXY_ALLOW_PRIVATE_DOMAINS`.
 
-## Changing a config file
+## Changing a script or config file
 
-Edit the file, run `scripts/start-commands.sh`, and paste the printed command into the service's start
+Edit the file, run `scripts/start-commands.sh`, and paste the printed command into that service's start
 command on Railway.
 
 The files in `ssrf-proxy/` are copied from [langgenius/dify](https://github.com/langgenius/dify) and are

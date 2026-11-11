@@ -1,11 +1,11 @@
 #!/bin/sh
 # Start script for the Web service (image langgenius/dify-web).
+# Fixed settings get a default here; any variable set on the Railway service wins.
 set -e
 def() { if [ -z "$(printenv "$1")" ]; then export "$1=$2"; fi; }
 P="${DIFY_PUBLIC_URL:?DIFY_PUBLIC_URL is not set}"; P="${P%/}"
-def CONSOLE_API_URL "$P"
-def APP_API_URL "$P"
-def CONSOLE_WEB_URL "$P"
+# Always derived from DIFY_PUBLIC_URL: the image bakes in http://127.0.0.1 defaults.
+export CONSOLE_API_URL="$P" APP_API_URL="$P" CONSOLE_WEB_URL="$P"
 def NEXT_PUBLIC_SOCKET_URL "$(echo "$P" | sed 's#^https://#wss://#; s#^http://#ws://#')"
 export HOSTNAME=::   # listen on IPv4 and IPv6 (Docker sets HOSTNAME to the container name)
 def DEPLOY_ENV PRODUCTION

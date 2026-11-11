@@ -18,8 +18,9 @@ if [ "$MODE" = beat ]; then
 fi
 
 # One public domain for console, apps, API and files (served by the Dify proxy service).
+# Always derived from DIFY_PUBLIC_URL: the image bakes in http://127.0.0.1 defaults for some of these.
 P="${DIFY_PUBLIC_URL:?DIFY_PUBLIC_URL is not set}"; P="${P%/}"
-for v in CONSOLE_WEB_URL CONSOLE_API_URL SERVICE_API_URL APP_WEB_URL APP_API_URL FILES_URL TRIGGER_URL; do def "$v" "$P"; done
+for v in CONSOLE_WEB_URL CONSOLE_API_URL SERVICE_API_URL APP_WEB_URL APP_API_URL FILES_URL TRIGGER_URL; do export "$v=$P"; done
 def ENDPOINT_URL_TEMPLATE "$P/e/{hook_id}"
 def RESPECT_XFORWARD_HEADERS_ENABLED true
 

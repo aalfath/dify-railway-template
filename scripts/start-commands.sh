@@ -5,7 +5,7 @@
 # Re-run after changing a file and paste the new command into that service's settings.
 set -eu
 cd "$(dirname "$0")/.."
-b64() { gzip -9n < "$1" | base64 -w0; }
+b64() { base64 -w0 < "$1"; }   # plain base64: not every image has gunzip
 pack() { # pack <dest-path>=<repo-file> ... -> base64 tar.gz of the files only
   tmp=$(mktemp -d)
   for pair in "$@"; do
@@ -16,7 +16,7 @@ pack() { # pack <dest-path>=<repo-file> ... -> base64 tar.gz of the files only
   rm -rf "$tmp"
 }
 script() { # script <shell> <file> [args] [prefix] -> command that unpacks and runs a start script
-  printf '%s/bin/sh -c "echo %s | base64 -d | gunzip > /tmp/start.sh && exec %s /tmp/start.sh%s"' "${4:-}" "$(b64 "$2")" "$1" "${3:+ $3}"
+  printf '%s/bin/sh -c "echo %s | base64 -d > /tmp/start.sh && exec %s /tmp/start.sh%s"' "${4:-}" "$(b64 "$2")" "$1" "${3:+ $3}"
 }
 line() { printf '\n# %s\n%s\n' "$1" "$2"; }
 

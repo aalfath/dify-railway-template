@@ -1,0 +1,56 @@
+# Railway terminates TLS at its edge and sends X-Forwarded-Proto: https.
+map $http_x_forwarded_proto $dify_forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+map $dify_forwarded_proto $dify_forwarded_port {
+    https   443;
+    default 80;
+}
+map $http_upgrade $dify_connection_upgrade {
+    default upgrade;
+    ''      '';
+}
+
+server {
+    listen ${PORT};
+    listen [::]:${PORT};
+    server_name _;
+
+    # Resolve private service names at request time, so the proxy starts before the services do.
+    resolver ${NGINX_RESOLVER} valid=10s;
+
+    client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+    proxy_read_timeout ${NGINX_PROXY_TIMEOUT};
+    proxy_send_timeout ${NGINX_PROXY_TIMEOUT};
+
+    set $dify_api http://${API_HOST}:${API_PORT};
+    set $dify_web http://${WEB_HOST}:${WEB_PORT};
+    set $dify_plugin http://${PLUGIN_DAEMON_HOST}:${PLUGIN_DAEMON_PORT};
+
+    location = /proxy-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location /console/api { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /api         { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /v1          { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /openapi     { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /files       { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /mcp         { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /triggers    { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    location /callbacks/human-input/v2/im/ { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+    # Realtime workflow collaboration (the API runs the websocket worker class).
+    location /socket.io/  { proxy_pass $dify_api; include /etc/nginx/dify_proxy.conf; }
+
+    location /e/ {
+        proxy_pass $dify_plugin;
+        include /etc/nginx/dify_proxy.conf;
+        proxy_set_header Dify-Hook-Url $dify_forwarded_proto://$host$request_uri;
+    }
+
+    location /explore { proxy_pass $dify_web; include /etc/nginx/dify_proxy.conf; }
+    location /        { proxy_pass $dify_web; include /etc/nginx/dify_proxy.conf; }
+}
